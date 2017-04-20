@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+div.chart  {
+  font: 9px sans-serif;
+  font-weight: bold;
+  background-color: white;
+  border: 1px solid steelblue;
+  text-align: left;
+  width: 140px;
+  padding: 5px;
+  margin: -1px;
+  color: black;
+}
+
+div.innerchart  {
+  padding: 2px;
+  margin: 1px;
+  margin-top: 5px;
+}
+
+div.wrapper  {
+  overflow: hidden;
+}
+
+div.charttypo  {
+  font: 9px sans-serif;
+  display: inline-block;
+  margin-right: 10px;
+}
+
+div.chartbarpro  {
+  font: 9px sans-serif;
+  background-color: steelblue;
+  background-size: 10px 15px;
+  background-image: linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px);
+  display: inline-block;
+  color: steelblue;
+}
+
+div.chartbarfort  {
+  font: 9px sans-serif;
+  background-color: lightblue;
+  background-size: 10px 15px;
+  background-image: linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px);
+  display: inline-block;
+  color: lightblue;
+}
+
+div.chartbarfree  {
+  font: 9px sans-serif;
+  background-color: lightgrey;
+  background-size: 10px 15px;
+  background-image: linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px);
+  display: inline-block;
+  color: lightgrey;
+}
+
+</style>
+<div class="chart"></div>
+<script src="http://d3js.org/d3.v4.min.js"></script>
+<!--<script src="https://code.jquery.com/jquery-1.11.3.js"></script>-->
+<script>
+
+var weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+var parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%S");
+
+// Get the data
+var url_fort = "https://crossorigin.me/https://appointment-demandware.js-sphere.net/list/timeslots/10779/?locationId=9000012668";
+var url_pro = "https://crossorigin.me/https://appointment-demandware.js-sphere.net/list/timeslots/10779/?locationId=9000012669";
+var url_anf = "https://crossorigin.me/https://appointment-demandware.js-sphere.net/list/timeslots/10779/?locationId=9000012670";
+//url_pro = "timeslots_pro.json";
+//url_fort = "timeslots_fort.json";
+
+var timeslots = [];
+
+/*
+d3.json(url_pro, function(data)
+{
+    for (var key in data.timeslots) {
+      timeslots.push(data.timeslots[key]);  
+    }
+    //join_and_show();
+});
+*/
+
+d3.json(url_fort, function(data)
+{
+    for (var key in data.timeslots) {
+      data.timeslots[key].type = "fort";
+      timeslots.push(data.timeslots[key]);  
+    }
+    console.log(timeslots);
+    
+    d3.json(url_pro, function(data)
+    {
+      for (var key in data.timeslots) {
+        data.timeslots[key].type = "pro";
+        timeslots.push(data.timeslots[key]);  
+      }
+    console.log(timeslots);
+    join_and_show();
+});
+});
+
+
+
+
+function join_and_show()
+{
+    // Sort by day
+    var day = d3.timeFormat("%Y-%m-%d");
+
+    var nest = d3.nest()
+      .key(function (d) {
+         return day(new Date(d.start));
+    })
+    .entries(timeslots);
+
+    parseTime = d3.timeParse("%Y-%m-%d");
+    var days = d3.select(".chart").selectAll("div").data(nest)
+        .enter().append("div")
+        .attr("class", function(d) { return "_" + d.key + " innerchart"; })
+        .text(function(d) { return weekdays[parseTime(d.key).getDay()] + " " + d.key; });
+
+    parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%S");
+    days.each(function(key) {
+
+      console.log(key);
+      /*
+      console.log(typeof(key));
+      var sorted_key_values = key.sort(function(x, y) {
+        return d3.ascending(x.key, y.key);
+      });
+      */
+
+      //sorted_key_values = key.values.sort(d3.ascending)
+      //console.log(sorted_key_values);
+
+      var bar = d3.select("._"+key.key).selectAll("div").data(key.values.sort(function(a, b) { return parseTime(a.start).getTime() - parseTime(b.start).getTime(); }))
+        .enter().append("div")
+        .attr("class", "chartwrapper");
+
+        bar.append("div")
+        .attr("class", "charttypo")
+        .text(function(d) { var date = parseTime(d.start); return (date.getHours()<10?'0':'')+date.getHours()+":"+(date.getMinutes()<10?'0':'')+date.getMinutes() });
+
+        bar.append("div")
+        .attr("class", function(d) { return "chartbar"+d.type; })
+        .style("width", function(d) { return (10-d.free_seats)*10 + "px"; } )
+        //.style("background-color", "steelblue")
+        .text(".");
+
+        bar.append("div")
+        .attr("class", "chartbarfree")
+        .style("width", function(d) { return (d.free_seats)*10 + "px"; } )
+        //.style("background-color", "steelblue")
+        .text(".");
+    });
+}
+    /*
+      d3.select(".chart").selectAll("div").data(timeslots)
+        .enter().append("div")
+        .text(function(d) { return days[parseTime(d.start).getDay()] + ": " + dodo(10-d.free_seats, "🏄") + " / " + d.free_seats + " free"; });
+    */
+
+
+
+function dodo(d, s) {
+  var c = "";
+  for (i=0; i<d; i++)
+    c+=s;
+  return c;
+}
+
+</script>
