@@ -91,7 +91,6 @@ d3.json(url_fort, function(data)
       data.timeslots[key].type = "fort";
       timeslots.push(data.timeslots[key]);  
     }
-    console.log(timeslots);
     
     d3.json(url_pro, function(data)
     {
@@ -99,7 +98,6 @@ d3.json(url_fort, function(data)
         data.timeslots[key].type = "pro";
         timeslots.push(data.timeslots[key]);  
       }
-    console.log(timeslots);
     join_and_show();
 });
 });
@@ -126,17 +124,6 @@ function join_and_show()
 
     parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%S");
     days.each(function(key) {
-
-      console.log(key);
-      /*
-      console.log(typeof(key));
-      var sorted_key_values = key.sort(function(x, y) {
-        return d3.ascending(x.key, y.key);
-      });
-      */
-
-      //sorted_key_values = key.values.sort(d3.ascending)
-      //console.log(sorted_key_values);
 
       var bar = d3.select("._"+key.key).selectAll("div").data(key.values.sort(function(a, b) { return parseTime(a.start).getTime() - parseTime(b.start).getTime(); }))
         .enter().append("div")
